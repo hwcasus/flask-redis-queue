@@ -3,7 +3,9 @@ version: '3.7'
 services:
 
   web:
-    build: .
+    build:
+      context: .
+      network: host
     image: web
     container_name: web
     ports:
@@ -31,7 +33,9 @@ services:
     image: redis:5.0.7-alpine
 
   dashboard:
-    build: ./project/dashboard
+    build:
+      context: ./project/dashboard
+      network: host
     image: dashboard
     container_name: dashboard
     ports:
