@@ -2,9 +2,12 @@
 
 
 import os
-
+import torch
 from flask import Flask
 from flask_bootstrap import Bootstrap
+
+
+torch.multiprocessing.set_start_method('spawn', force=True)
 
 # instantiate the extensions
 bootstrap = Bootstrap()
@@ -45,7 +48,7 @@ def create_worker_app():
     app_settings = os.getenv("APP_SETTINGS")
     app.config.from_object(app_settings)
 
-    from project.engine import NoduleDetectionInference
+    from project.engine import NoduleDetectionInference, LungSegmentationInference, NoduleClassifyInference 
 
     detector = NoduleDetectionInference(
         config_path='models/nodule_detection_yi_s3_b210/model.yaml',

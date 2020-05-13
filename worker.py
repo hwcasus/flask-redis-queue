@@ -1,7 +1,9 @@
 import redis
+import torch
 from rq import Connection, Worker
 
 from project.server import create_worker_app
+
 
 app = create_worker_app()
 
@@ -15,5 +17,6 @@ def run_worker():
 
 
 if __name__ == "__main__":
+
     with app.app_context():
         run_worker()

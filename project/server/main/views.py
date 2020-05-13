@@ -5,7 +5,7 @@ import redis
 from rq import Queue, Connection
 from flask import render_template, Blueprint, jsonify, request, current_app
 
-from project.server.main.tasks import create_task
+from project.server.main.tasks import create_task, inference_task
 
 main_blueprint = Blueprint("main", __name__,)
 
@@ -21,6 +21,21 @@ def run_task():
     with Connection(redis.from_url(current_app.config["REDIS_URL"])):
         q = Queue()
         task = q.enqueue(create_task, task_type)
+    response_object = {
+        "status": "success",
+        "data": {
+            "task_id": task.get_id()
+        }
+    }
+    return jsonify(response_object), 202
+
+
+@main_blueprint.route("/inference", methods=["POST"])
+def run_inference():
+    r = request.get_json(force=True)
+    with Connection(redis.from_url(current_app.config["REDIS_URL"])):
+        q = Queue()
+        task = q.enqueue(inference_task, r)
     response_object = {
         "status": "success",
         "data": {
