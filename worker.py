@@ -1,10 +1,10 @@
 import redis
 from rq import Connection, Worker
 
-from project.server import create_app
+from project.server import create_worker_app
 
+app = create_worker_app()
 
-app = create_app()
 
 def run_worker():
     redis_url = app.config["REDIS_URL"]
@@ -15,4 +15,5 @@ def run_worker():
 
 
 if __name__ == "__main__":
-    run_worker()
+    with app.app_context():
+        run_worker()
