@@ -45,7 +45,7 @@ VERSION_CODE = "0417"
 #     return detail
 
 def inference_task(input_dict):
-     for series in input_dict['series']:
+    for series in input_dict['series']:
         series_id = series['series_uid']
         image_url_list = series['image_url']
         sub_dir = f'tmp/{series_id}'
@@ -80,12 +80,12 @@ def inference_task(input_dict):
         vol = np.flip(vol, 0)
 
         # Segmentation
-        output, elapsed_time_seg = segmentor.inference(vol[np.newaxis])
+        output, elapsed_time_seg = current_app.config['segmentor'].inference(vol[np.newaxis])
         mask = output['mask'].squeeze()
         print(f'Lung Segmentation - Done with elapsed time = {elapsed_time_seg}')
 
         # Detection
-        (ret, data), elapsed_time_det = detector.inference(vol, mask, spacing)
+        (ret, data), elapsed_time_det = current_app.config['detector'].inference(vol, mask, spacing)
         pred = np.array([bbox.cpu().numpy() for bbox in ret['bbox']]).squeeze()  # [50, 5], [score, z, y, x, d]
         print(f'Lung Nodule Detection - Done with elapsed time = {elapsed_time_det}')
 
@@ -105,10 +105,10 @@ def inference_task(input_dict):
         bbox = pred[:TOP_K, 1:]
 
         # Label resampling, back to original spacing
-        new_bbox = detector.label_resampling(bbox, spacing, extendbox=data['extendbox'])
+        new_bbox = current_app.config['detector'].label_resampling(bbox, spacing, extendbox=data['extendbox'])
 
         # Classification
-        ret, elapsed_time_cls = classifier.inference(vol[np.newaxis], new_bbox, spacing)
+        ret, elapsed_time_cls = current_app.config['classifier'].inference(vol[np.newaxis], new_bbox, spacing)
         texture_prob = ret.cpu().numpy()
         texture = texture_prob.argmax(1)[:, np.newaxis]
         predictions = np.concatenate([scores, bbox, texture], axis=1)
@@ -140,7 +140,7 @@ def inference_task(input_dict):
             imageio.mimsave(os.path.join(result_dir, 'det.gif'), image_list)
 
             # Label resampling, back to original spacing
-            new_bboxes = detector.label_resampling(bbox, spacing, extendbox=data['extendbox'])
+            new_bboxes = current_app.config['detector'].label_resampling(bbox, spacing, extendbox=data['extendbox'])
 
             # Draw resampled output on original volume
             new_vol = np.repeat(vol[np.newaxis], 3, axis=0)

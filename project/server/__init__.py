@@ -52,7 +52,19 @@ def create_worker_app():
         pretrain_weights=['models/nodule_detection_yi_s3_b210/weight.ckpt'],
         gpu_device=0
     )
+    segmentor = LungSegmentationInference(
+        config_path='models/lung_segmentation/model_revised.yaml',
+        pretrain_weights=['models/lung_segmentation/weight.ckpt'],
+        gpu_device=1
+    )
+    classifier = NoduleClassifyInference(
+        config_path='models/nodule_classification/model_concat.yaml',
+        pretrain_weights=['models/nodule_classification/weight.ckpt'],
+        gpu_device=2
+    )
 
     app.config['detector'] = detector
+    app.config['segmentor'] = segmentor
+    app.config['classifier'] = classifier
 
     return app

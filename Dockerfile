@@ -1,5 +1,7 @@
 # FROM python:3.6
+# FROM aicscv.azurecr.io/med-lightning-hwc:0.0.4
 FROM aicscv.azurecr.io/med-lightning-cu10-hwc:0.0.3
+
 RUN git clone https://6b86a596d2dceef8bc478ea225fe06efa8c66486@github.com/ASUS-AICS/med-lightning /med-lightning --branch deploy-workaround
 # WORKDIR /med-lightning
 # RUN python3 setup.py build develop
