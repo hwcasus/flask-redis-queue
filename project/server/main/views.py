@@ -35,7 +35,7 @@ def run_inference():
     r = request.get_json(force=True)
     with Connection(redis.from_url(current_app.config["REDIS_URL"])):
         q = Queue()
-        task = q.enqueue(inference_task, r)
+        task = q.enqueue(inference_task, r, job_timeout=600)
     response_object = {
         "status": "success",
         "data": {
