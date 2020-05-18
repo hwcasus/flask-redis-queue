@@ -1,24 +1,15 @@
-# project/server/main/tasks.py
-
-
-from flask import current_app
-import time
-
 import os
-
-import imageio
+import time
 import json
+
 import numpy as np
 import requests
+from flask import current_app
 
-from project.utils import load_dcm, draw_bbox
+from project.utils import load_dcm
 
 TOP_K = 5
 VERSION_CODE = "0417"
-
-def create_task(task_type):
-    time.sleep(int(task_type) * 10)
-    return id(current_app.config['detector'])
 
 
 def inference_task(input_dict):
@@ -104,33 +95,6 @@ def inference_task(input_dict):
             "elapsed_time_det": elapsed_time_det,
             "elapsed_time_seg": elapsed_time_seg,
         })
-
-        # if draw:
-        #     # Drawing bbox on volume for debug, shouldn't exist when actually deployed
-        #     result_dir = os.path.join(app.instance_path, 'results')
-        #     os.makedirs(result_dir, exist_ok=True)
-
-        #     # Draw output from detector on input (preprocessed) volume
-        #     new_bboxes = np.round(bbox).astype(int)
-        #     new_vol_resampled = np.repeat(data['vol_resampled'], 3, axis=0)
-        #     draw_bbox(new_vol_resampled, new_bboxes[:5])
-
-        #     image_list = [s for s in new_vol_resampled.transpose((1, 2, 3, 0))]
-        #     imageio.mimsave(os.path.join(result_dir, 'det.gif'), image_list)
-
-        #     # Label resampling, back to original spacing
-        #     new_bboxes = current_app.config['detector'].label_resampling(bbox, spacing, extendbox=data['extendbox'])
-
-        #     # Draw resampled output on original volume
-        #     new_vol = np.repeat(vol[np.newaxis], 3, axis=0)
-        #     new_vol = (new_vol - new_vol.min()) / (new_vol.max() - new_vol.min()) * 255
-        #     draw_bbox(new_vol, new_bboxes[:5])
-
-        #     image_list = [s for s in new_vol.transpose((1, 2, 3, 0))]
-        #     imageio.mimsave(os.path.join(result_dir, 'det_origin.gif'), image_list)
-
-        #     image_list = [s for s in mask[..., np.newaxis]]
-        #     imageio.mimsave(os.path.join(result_dir, 'mask.gif'), image_list)
 
     response_pickled = json.dumps(response)
     headers = {'content-type': 'application/json'}

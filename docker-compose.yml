@@ -11,8 +11,6 @@ services:
       - web_nw
     container_name: web
     runtime: nvidia
-    # command: python3 manage.py run -h 0.0.0.0
-    # command: bash -c "cd /med-lightning && python3 setup.py build develop && cd /webapp &&  uwsgi --ini /webapp/uwsgi.ini"
     volumes:
       - .:/webapp
     environment:
@@ -50,20 +48,6 @@ services:
     networks:
       - web_nw
     image: redis:5.0.7-alpine
-
-  dashboard:
-    build:
-      context: ./project/dashboard
-      network: host
-    image: dashboard
-    networks:
-      - web_nw
-    container_name: dashboard
-    ports:
-      - 9181:9181
-    command: rq-dashboard -H redis
-    depends_on:
-      - redis
 
 networks:
   web_nw:
