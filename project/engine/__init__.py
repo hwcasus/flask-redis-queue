@@ -1,5 +1,1 @@
-from .lung_segment import LungSegmentationInference
-from .nodule_classify import NoduleClassifyInference
-from .nodule_detect import NoduleDetectionInference
-from .nodule_detect_body import NoduleDetectionBodyInference
-from .nodule_segment_classify import NoduleSegClassifyInference
+from .inference_pipeline import InferencePipeline

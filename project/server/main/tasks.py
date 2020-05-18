@@ -49,52 +49,8 @@ def inference_task(input_dict):
         # Notive that this is a workaround due to reversed image list from server
         vol = np.flip(vol, 0)
 
-        # Segmentation
-        output, elapsed_time_seg = current_app.config['segmentor'].inference(vol[np.newaxis])
-        mask = output['mask'].squeeze()
-        print(f'Lung Segmentation - Done with elapsed time = {elapsed_time_seg}')
-
-        # Detection
-        (ret, data), elapsed_time_det = current_app.config['detector'].inference(vol, mask, spacing)
-        pred = np.array([bbox.cpu().numpy() for bbox in ret['bbox']]).squeeze()  # [50, 5], [score, z, y, x, d]
-        print(f'Lung Nodule Detection - Done with elapsed time = {elapsed_time_det}')
-
-        # Re-order prediction by z-axis coordinate
-        pred = pred[np.argsort(pred[:, 1])]
-
-        # Filter by threshold
-        # threshold for yi_s3_b210
-        # threshold = 0.926097542 #  0.980911999
-        threshold = 0.980911999
-        # threshold for fbody_closing
-        # threshold = 0.972237150 #  0.993234332
-        pred = pred[pred[:, 0] > threshold]
-
-        # Select Top K (Default: 10)
-        scores = pred[:TOP_K, :1]
-        bbox = pred[:TOP_K, 1:]
-
-        # Label resampling, back to original spacing
-        new_bbox = current_app.config['detector'].label_resampling(bbox, spacing, extendbox=data['extendbox'])
-
-        # Classification
-        ret, elapsed_time_cls = current_app.config['classifier'].inference(vol[np.newaxis], new_bbox, spacing)
-        texture_prob = ret.cpu().numpy()
-        texture = texture_prob.argmax(1)[:, np.newaxis]
-        predictions = np.concatenate([scores, bbox, texture], axis=1)
-        print(f'Nodule Texture Classification - Done with elapsed time = {elapsed_time_cls}')
-
-        response[series_id].update({
-            "spacing": spacing.tolist(),
-            "extendbox": data['extendbox'].tolist(),
-            "top_five": predictions.tolist(),
-            "message": "Successfully predicted.",
-            "version": VERSION_CODE,
-            "valid": True,
-            "elapsed_time_cls": elapsed_time_cls,
-            "elapsed_time_det": elapsed_time_det,
-            "elapsed_time_seg": elapsed_time_seg,
-        })
+        result = current_app.config['InferencePipeline'].inference(vol, spacing)
+        response[series_id].update(result)
 
     response_pickled = json.dumps(response)
     headers = {'content-type': 'application/json'}

@@ -26,22 +26,7 @@ def create_worker_app():
     app_settings = os.getenv("APP_SETTINGS")
     app.config.from_object(app_settings)
 
-    from project.engine import NoduleDetectionInference, LungSegmentationInference, NoduleClassifyInference
-
-    app.config['detector'] = NoduleDetectionInference(
-        config_path='models/nodule_detection_yi_s3_b210/model.yaml',
-        pretrain_weights=['models/nodule_detection_yi_s3_b210/weight.ckpt'],
-        gpu_device=0
-    )
-    app.config['segmentor'] = LungSegmentationInference(
-        config_path='models/lung_segmentation/model_revised.yaml',
-        pretrain_weights=['models/lung_segmentation/weight.ckpt'],
-        gpu_device=1
-    )
-    app.config['classifier'] = NoduleClassifyInference(
-        config_path='models/nodule_classification/model_concat.yaml',
-        pretrain_weights=['models/nodule_classification/weight.ckpt'],
-        gpu_device=2
-    )
+    from project.engine import InferencePipeline
+    app.config['InferencePipeline'] = InferencePipeline(top_k=5, version_code='0417')
 
     return app

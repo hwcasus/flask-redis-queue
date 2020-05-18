@@ -61,7 +61,9 @@ class NoduleClassifyInference(InferenceModel):
             probs_list.append(probs)
 
         probs = torch.cat(probs_list).detach()
-        return probs
+        texture_prob = probs.cpu().numpy()
+        texture = texture_prob.argmax(1)[:, np.newaxis]
+        return texture
 
 
 if __name__ == '__main__':

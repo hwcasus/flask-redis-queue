@@ -30,7 +30,8 @@ class LungSegmentationInference(InferenceModel):
         net_out['seg'] = self.sigmoid(self.upsample(net_out['seg']))
         net_out['mask'] = self.post_processing(net_out['seg'].detach().cpu().numpy(), threshold).astype(int)
 
-        return net_out
+        mask = net_out['mask'].squeeze()
+        return mask
 
     def post_processing(self, mask, threshold):
         selem = np.ones((3, 3, 3))

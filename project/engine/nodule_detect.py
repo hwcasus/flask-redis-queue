@@ -20,6 +20,13 @@ class NoduleDetectionInference(InferenceModel):
         self.resolution = (1, 1, 1)
         self.pad_value = 170
 
+        # threshold is recorded in models/nodule_detection_yi_s3_b210/cpm_threshold_results_subset0.txt
+        # CPM @ 4 FP/scan : 0.926097542
+        # CPM @ 2 FP/scan : 0.980911999
+
+        # TODO: Load this value from text file
+        self.threshold = 0.980911999
+
         self.transforms = self._get_transforms(self.cfg['datasets']['lungnodule']['heavy_val']['transforms'])
         self.SplitCombiner = SplitCombiner(**self.cfg['datasets']['lungnodule']['heavy_val']['split_combine'])
         self.load_checkpoint(pretrain_weights)
@@ -41,8 +48,9 @@ class NoduleDetectionInference(InferenceModel):
             'mask_resampled': mask_resampled,
             'extendbox': extendbox
         }
+        pred = self.post_process(net_out)
 
-        return net_out, data
+        return pred, data
 
     def process_output_to_world_coord(self, output, origin, spacing, extendbox, resolution):
         output = output.transpose(1, 0)
@@ -102,23 +110,6 @@ class NoduleDetectionInference(InferenceModel):
 
         return image, mask, extendbox
 
-    def post_process(self, img):
-        selem = np.ones((3, 3, 3))
-        binary_img = binary_dilation(img > 0.5, selem=selem)
-        label_image = label(binary_img, connectivity=2)
-
-        region_area = np.array([(region.label, region.area) for region in regionprops(label_image)])
-        sorted_region_area = region_area[np.argsort(-region_area[:, 1])]
-
-        if len(sorted_region_area) > 1 and sorted_region_area[0, 1] < sorted_region_area[1, 1] * 4:
-            label_image = np.logical_or(
-                label_image == sorted_region_area[0, 0],
-                label_image == sorted_region_area[1, 0])
-        else:
-            label_image = label_image == sorted_region_area[0, 0]
-
-        return label_image
-
     def clip_and_normalize(self, img, lung_window=(-1200, 600)):
 
         lungwin = np.array(lung_window)
@@ -148,23 +139,30 @@ class NoduleDetectionInference(InferenceModel):
         else:
             raise ValueError('wrong shape')
 
+    def post_process(ret):
+        """
+            Three steps, include:
+            1. Parse bbox from output of network.forward
+            2. Re-order prediction by z-axis coordinate
+            3. Filter by threshold
+        """
+
+        pred = np.array([
+            bbox.cpu().numpy()
+            for bbox in ret['bbox']]
+        ).squeeze() # [50, 5], [score, z, y, x, d]
+
+        pred = pred[np.argsort(pred[:, 1])]
+        pred = pred[pred[:, 0] > threshold]
+
+        return pred
+
 
 if __name__ == '__main__':
 
     config_path = '../../models/nodule_detection_yi_s3_b210/model.yaml'
     pretrain_weights = ['../../models/nodule_detection_yi_s3_b210/weight.ckpt']
-
     detector = NoduleDetectionInference(config_path, pretrain_weights, 0)
-
-    # Load JB Data
-    # vol = np.load('/host/JB/JBsample/DCF1131050515_202002270006.npy')
-    # spacing = np.load('/host/JB/JBsample/DCF1131050515_202002270006_spacing.npy')
-    # with h5py.File('/host/JB/JBsample/mask.hdf5', 'r') as f:
-    #     mask = np.array(f['DCF1131050515_202002270006']).squeeze()
-
-    # LUNA Input
-    # vol, origin, spacing, _ = load_itk_image('/host/lung_nodule/LUNA/raw/subset0/1.3.6.1.4.1.14519.5.2.1.6279.6001.295420274214095686326263147663.mhd')
-    # mask, _, _, _ = load_itk_image('/host/lung_nodule/LUNA/seg/1.3.6.1.4.1.14519.5.2.1.6279.6001.295420274214095686326263147663.mhd')
 
     # Randon Input
     vol = np.ones((300, 300, 300))
