@@ -23,6 +23,7 @@ def create_task(task_type):
 
 def inference_task(input_dict):
     response = {}
+    post_api = input_dict['post_api']
     for series in input_dict['series']:
         series_id = series['series_uid']
         image_url_list = series['image_url']
@@ -133,6 +134,4 @@ def inference_task(input_dict):
 
     response_pickled = json.dumps(response)
     headers = {'content-type': 'application/json'}
-    r = requests.post('http://52.250.112.18:6006/api/report', headers=headers, data=response_pickled)
-
-    # return Response(response=response_pickled, status=200, mimetype="application/json")
+    r = requests.post(post_api, headers=headers, data=response_pickled)

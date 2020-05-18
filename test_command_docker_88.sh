@@ -1,5 +1,6 @@
 curl "http://52.250.112.18:8888/inference" -X POST -H "Content-Type: application/json" -d '
 {
+  "post_api": "http://52.250.112.18:6006/api/report",
   "series": [
     {
       "series_uid": "1.3.46.670589.33.1.63611965771379161100002.5752371442123440889",
